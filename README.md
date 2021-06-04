@@ -9,4 +9,3 @@
 
 3. Run the project
 <pre><code>python FaceandQRC2.py</code></pre>
-
