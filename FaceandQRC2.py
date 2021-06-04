@@ -32,10 +32,11 @@ anchors = generate_anchors(feature_map_sizes, anchor_sizes, anchor_ratios)
 anchors_exp = np.expand_dims(anchors, axis=0)
 
 id2class = {0: 'Mask', 1: 'NoMask'}
+QRCTemp = ''
 
 def clear_QRCTemp(): # 清空QRCode暫存
     global QRCTemp
-    print("clear " + QRCTemp)
+    print("clear QRCTemp (" + QRCTemp + ")")
     QRCTemp = ""
     #return
 
@@ -104,6 +105,8 @@ def inference(image,
 
 # 即時影像
 def run_on_realtime(conf_thresh):
+    global QRCTemp;
+    
     # 讀入即時影像（從camera）
     cap = cv2.VideoCapture(0)
     
@@ -149,9 +152,20 @@ def run_on_realtime(conf_thresh):
             text = "{} ({})".format(barcodeData, barcodeType)
             cv2.putText(img_raw, text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
             
-            # 將QRC data 存入暫存
-            QRCTemp = barcodeData
-            threading.Timer(10.0, clear_QRCTemp).start()
+            
+
+            
+            if QRCTemp != '': # 如果QRC暫存有資料
+                if QRCTemp != barcodeData: # 如果QRC暫存和現有的不同，則替換
+                    QRCTemp = barcodeData
+                threading.Timer(5.0, clear_QRCTemp).start() # 5秒後清空暫存，之後加入傳到伺服器後，需要更久再清空暫存
+            
+            else: # 如果QRC暫存無資料
+                QRCTemp = barcodeData # 將QRC data 存入暫存
+            
+            # 如果QRC暫存存有東西，則清空
+            if QRCTemp != '':
+                threading.Timer(5.0, clear_QRCTemp).start() # 5秒後清空暫存，之後加入傳到伺服器後，需要更久再清空暫存
 
         # 顯示結果
         cv2.imshow('Face and QRC', img_raw[:, :, ::-1])
